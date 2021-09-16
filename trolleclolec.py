@@ -8,16 +8,16 @@ import random
 import math
 
 class config:
-	rd = 64    #roundness of the shperes, applied to both latitude and longitude
-	tl = 1     #time lock, miliseconds
+	rd = 64	#roundness of the shperes, applied to both latitude and longitude
+	tl = 1	 #time lock, miliseconds
 	sd = 200   #sphere max distance
 	sm = -200  #sphere min distance
 	sc = 200   #sphere count
 	mm = .05   #maximal movement
 	lm = -.05  #minimal movement
-	bs = 4     #highest sphere size
-	ss = .5    #lowest sphere size
-	ps = 3     #player speed
+	bs = 4	 #highest sphere size
+	ss = .5	#lowest sphere size
+	ps = 3	 #player speed
 
 sx = 0
 sy = 0
@@ -31,6 +31,14 @@ lsr = []#Sphere Size
 stx = []#Sphere X Position change per tick
 sty = []#Sphere Y Position change per tick
 stz = []#Sphere Z Position change per tick
+
+
+pos_x = 0
+pos_y = 0
+pos_z = 0
+rot_x = 0
+rot_y = 0
+rot_z = 0
 
 for i in range(config.sc):
 	lsx.append(random.randint(config.sm, config.sd))
@@ -60,69 +68,80 @@ glLoadIdentity()
 
 run = True
 while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
-                run = False  
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			run = False
+		if event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+				run = False  
 
-    keypress = pygame.key.get_pressed()
+	keypress = pygame.key.get_pressed()
 
-    # init model view matrix
-    glLoadIdentity()
+	# init model view matrix
+	glLoadIdentity()
+	
+	# init the view matrix
+	glPushMatrix()
+	glLoadIdentity()
 
-    # init the view matrix
-    glPushMatrix()
-    glLoadIdentity()
+	# apply the movement 
+	if keypress[pygame.K_w]:
+		pos_z+=config.ps
+		glTranslatef(0,0,config.ps)
+	if keypress[pygame.K_s]:
+		pos_z+=config.ps - config.ps * 2
+		glTranslatef(0,0,config.ps - config.ps * 2)
+	if keypress[pygame.K_d]:
+		pos_x+=config.ps - config.ps * 2
+		glTranslatef(config.ps - config.ps * 2,0,0)
+	if keypress[pygame.K_a]:
+		pos_x+=config.ps
+		glTranslatef(config.ps,0,0)
+	if keypress[pygame.K_UP]:
+		glRotatef(-1, 1, 0, 0)
+	if keypress[pygame.K_DOWN]:
+		glRotatef(1, 1, 0, 0)
+	if keypress[pygame.K_LEFT]:
+		glRotatef(-1, 0, 1, 0)
+	if keypress[pygame.K_RIGHT]:
+		glRotatef(1, 0, 1, 0)
+	# multiply the current matrix by the get the new view matrix and store the final via matrix 
+	glMultMatrixf(viewMatrix)
+	viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
 
-    # apply the movement 
-    if keypress[pygame.K_w]:
-        glTranslatef(0,0,config.ps)
-    if keypress[pygame.K_s]:
-        glTranslatef(0,0,config.ps - config.ps * 2)
-    if keypress[pygame.K_d]:
-        glTranslatef(config.ps - config.ps * 2,0,0)
-    if keypress[pygame.K_a]:
-        glTranslatef(config.ps,0,0)
-    if keypress[pygame.K_UP]:
-	    glRotatef(-1, 1, 0, 0)
-    if keypress[pygame.K_DOWN]:
-	    glRotatef(1, 1, 0, 0)
-    if keypress[pygame.K_LEFT]:
-	    glRotatef(-1, 0, 1, 0)
-    if keypress[pygame.K_RIGHT]:
-	    glRotatef(1, 0, 1, 0)
-    # multiply the current matrix by the get the new view matrix and store the final via matrix 
-    glMultMatrixf(viewMatrix)
-    viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
+	# apply view matrix
+	glPopMatrix()
+	glMultMatrixf(viewMatrix)
 
-    # apply view matrix
-    glPopMatrix()
-    glMultMatrixf(viewMatrix)
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) #Clear the screen
 
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT) #Clear the screen
+	glPushMatrix()
 
-    glPushMatrix()
-
-    sx = sx + .01
-    glTranslatef(sx, sy, sz) #Move to the place
-    glColor4f(1, 1, 1, 1) #Put color
-    gluSphere(sphere, 1.0, config.rd, config.rd) #Draw sphere
-    glPopMatrix()
-    
-    for n, sp in enumerate(los):
-        glPushMatrix()
-        lsx[n] = lsx[n] + stx[n]
-        lsy[n] = lsy[n] + sty[n]
-        lsz[n] = lsz[n] + stz[n]
-        glTranslatef(lsx[n], lsy[n], lsz[n])
-        glColor4f(1, 1, 1, 1) 
-        gluSphere(los[i], lsr[i], config.rd, config.rd)
-        glPopMatrix()
+	sx = sx + .01
+	glTranslatef(sx, sy, sz) #Move to the place
+	glColor4f(1, 1, 1, 1) #Put color
+	gluSphere(sphere, 1.0, config.rd, config.rd) #Draw sphere
+	glPopMatrix()
+	
+	for n, sp in enumerate(los):
+		glPushMatrix()
+		lsx[n] = lsx[n] + stx[n]
+		lsy[n] = lsy[n] + sty[n]
+		lsz[n] = lsz[n] + stz[n]
+		glTranslatef(lsx[n], lsy[n], lsz[n])
+		polc = config.rd
+		
+		#OPTIMIZATION BY DISTANCE
+		#if the sphere is more than 50 away, the program will reduce its render quality by 4
+		#simple yet it made it like 5 times faster
+		if 50 < abs(pos_x-lsx[n]) or 50 < abs(pos_z-lsz[n]):
+			polc = int(polc/4)
+		glColor4f(1, 1, 1, 1) 
+		gluSphere(los[i], lsr[i], polc, polc)
+		glPopMatrix()
 
 
-    pygame.display.flip() #Update the screen
-    pygame.time.wait(config.tl)  #Wait, propably useless
+	pygame.display.flip() #Update the screen
+	pygame.time.wait(config.tl)  #Wait, propably useless
 
 pygame.quit()
