@@ -20,7 +20,7 @@ class config:
 	fullscreen = True
 	reso_x = 1280
 	reso_y = 720
-	ps = 3	          #player speed
+	ps = 3	           #player speed
 	sens = .5          #sensitivity of turning when using arrows
 	d_sens = sens - sens *2
 	
@@ -75,7 +75,9 @@ for i in range(config.sc):
 pygame.init()
 display = (config.reso_x, config.reso_y)
 scree = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-pygame.display.toggle_fullscreen()
+
+if config.fullscreen:
+	pygame.display.toggle_fullscreen()
 
 
 glEnable(GL_DEPTH_TEST)
