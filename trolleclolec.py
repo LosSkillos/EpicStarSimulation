@@ -4,20 +4,40 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import random
-
 import math
 
+import time
+
+def cmt():
+    return round(time.time() * 1000)
+
+
+
+
+
 class config:
-	rd = 64	#roundness of the shperes, applied to both latitude and longitude
-	tl = 1	 #time lock, miliseconds
-	sd = 200   #sphere max distance
-	sm = -200  #sphere min distance
-	sc = 200   #sphere count
+	#BASIC SETTINGS
+	fullscreen = True
+	reso_x = 1280
+	reso_y = 720
+	ps = 3	          #player speed
+	sens = .5          #sensitivity of turning when using arrows
+	d_sens = sens - sens *2
+	
+	#OPTIMIZATION SETTINGS
+	rd = 64	          #roundness of the shperes, applied to both latitude and longitude
+	tl = 1	          #time lock, miliseconds
+	opt_dist = 50     #if the star is this far a away, the quality will be devided by opt_mult
+	opt_mult = 4      #if the star is opt_dist far away, the quality will be devided by this
+	
+	#STAR SETTINGS
+	sd = 500   #sphere max distance
+	sm = -500  #sphere min distance
+	sc = 250   #sphere count
 	mm = .05   #maximal movement
 	lm = -.05  #minimal movement
-	bs = 4	 #highest sphere size
-	ss = .5	#lowest sphere size
-	ps = 3	 #player speed
+	bs = 8	   #highest sphere size
+	ss = .5	   #lowest sphere size
 
 sx = 0
 sy = 0
@@ -40,7 +60,9 @@ rot_x = 0
 rot_y = 0
 rot_z = 0
 
+
 for i in range(config.sc):
+	#random.seed(cmt())
 	lsx.append(random.randint(config.sm, config.sd))
 	lsy.append(random.randint(config.sm, config.sd))
 	lsz.append(random.randint(config.sm, config.sd))
@@ -51,15 +73,17 @@ for i in range(config.sc):
 	stz.append(random.uniform(config.lm, config.mm))
 
 pygame.init()
-display = (1200, 900)
+display = (config.reso_x, config.reso_y)
 scree = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+pygame.display.toggle_fullscreen()
+
 
 glEnable(GL_DEPTH_TEST)
 
 sphere = gluNewQuadric() #Create new sphere
 
 glMatrixMode(GL_PROJECTION)
-gluPerspective(45, (display[0]/display[1]), 0.1, 500)
+gluPerspective(45, (display[0]/display[1]), 0.1, 5000) #THE LAST ARGUMENT HERE IS THE DRAWING DISTANCE
 
 glMatrixMode(GL_MODELVIEW)
 gluLookAt(0, -8, 0, 0, 0, 0, 0, 0, 1)
@@ -98,13 +122,13 @@ while run:
 		pos_x+=config.ps
 		glTranslatef(config.ps,0,0)
 	if keypress[pygame.K_UP]:
-		glRotatef(-1, 1, 0, 0)
+		glRotatef(config.d_sens, config.sens, 0, 0)
 	if keypress[pygame.K_DOWN]:
-		glRotatef(1, 1, 0, 0)
+		glRotatef(config.sens, config.sens, 0, 0)
 	if keypress[pygame.K_LEFT]:
-		glRotatef(-1, 0, 1, 0)
+		glRotatef(config.d_sens, 0, config.sens, 0)
 	if keypress[pygame.K_RIGHT]:
-		glRotatef(1, 0, 1, 0)
+		glRotatef(config.sens, 0, config.sens, 0)
 	# multiply the current matrix by the get the new view matrix and store the final via matrix 
 	glMultMatrixf(viewMatrix)
 	viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
@@ -134,8 +158,8 @@ while run:
 		#OPTIMIZATION BY DISTANCE
 		#if the sphere is more than 50 away, the program will reduce its render quality by 4
 		#simple yet it made it like 5 times faster
-		if 50 < abs(pos_x-lsx[n]) or 50 < abs(pos_z-lsz[n]):
-			polc = int(polc/4)
+		if config.opt_dist < abs(pos_x-lsx[n]) or config.opt_dist < abs(pos_z-lsz[n]):
+			polc = int(polc/config.opt_mult)
 		glColor4f(1, 1, 1, 1) 
 		gluSphere(los[i], lsr[i], polc, polc)
 		glPopMatrix()
