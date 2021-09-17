@@ -24,7 +24,7 @@ class config:
 	ps = 3	           #player speed
 	sens = 1          #sensitivity of turning when using arrows
 	d_sens = sens - sens *2
-	fov = 150
+	fov = 100
 	
 	#OPTIMIZATION SETTINGS
 	rd = 64	          #roundness of the shperes, applied to both latitude and longitude
@@ -75,7 +75,7 @@ for i in range(config.sc):
 	stx.append(random.uniform(config.lm, config.mm))
 	sty.append(random.uniform(config.lm, config.mm))
 	stz.append(random.uniform(config.lm, config.mm))
-	x=random.uniform(0.00, 1.00)
+	x=random.uniform(0.70, 1.00)
 	print(x)
 	scl.append(x)
 
@@ -127,20 +127,23 @@ while run:
 	# init the view matrix
 	glPushMatrix()
 	glLoadIdentity()
-
+	mods = pygame.key.get_mods()
+	ms = config.ps
+	if mods == 4097 or mods == 4161:
+		ms = config.ps * 4
 	# apply the movement 
 	if keypress[pygame.K_w]:
-		pos_z+=config.ps
-		glTranslatef(0,0,config.ps)
+		pos_z+=ms
+		glTranslatef(0,0,ms)
 	if keypress[pygame.K_s]:
-		pos_z+=config.ps - config.ps * 2
-		glTranslatef(0,0,config.ps - config.ps * 2)
+		pos_z+=ms - ms * 2
+		glTranslatef(0,0,ms - ms * 2)
 	if keypress[pygame.K_d]:
-		pos_x+=config.ps - config.ps * 2
-		glTranslatef(config.ps - config.ps * 2,0,0)
+		pos_x+=ms - ms * 2
+		glTranslatef(ms - ms * 2,0,0)
 	if keypress[pygame.K_a]:
-		pos_x+=config.ps
-		glTranslatef(config.ps,0,0)
+		pos_x+=ms
+		glTranslatef(ms,0,0)
 	if keypress[pygame.K_UP]:
 		glRotatef(config.d_sens, config.sens, 0, 0)
 	if keypress[pygame.K_DOWN]:
@@ -149,6 +152,8 @@ while run:
 		glRotatef(config.d_sens, 0, config.sens, 0)
 	if keypress[pygame.K_RIGHT]:
 		glRotatef(config.sens, 0, config.sens, 0)
+	if keypress[pygame.K_f]:
+		pygame.display.toggle_fullscreen()
 	# multiply the current matrix by the get the new view matrix and store the final via matrix 
 	glMultMatrixf(viewMatrix)
 	viewMatrix = glGetFloatv(GL_MODELVIEW_MATRIX)
